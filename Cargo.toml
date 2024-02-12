@@ -1,0 +1,29 @@
+[package]
+name = "dydx-v4"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+anyhow = { version = "1.0.6" }
+
+reqwest = { version = "0.11.14", features = ["json"] }
+base64 = { version = "0.21" }
+serde_json = { version = "1" }
+
+rand = { version = "0.8.5" }
+url = { version = "2.3.1" }
+tokio-tungstenite = { version = "0.16", features = ["native-tls"] }
+futures-util = { version = "0.3.26" }
+
+cosmrs = { version = "0.15" }
+prost = { version = "0.12" }
+iop-keyvault = { version = "0.0.16" }
+
+# Efficiency
+concat-string = { version = "1.0.1" }
+
+# Just for testing
+dotenv = { version = "0.15" }
