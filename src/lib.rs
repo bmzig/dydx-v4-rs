@@ -1,57 +1,119 @@
-use cosmrs::crypto;
+use cosmrs::{
+    crypto::{self, secp256k1::SigningKey},
+    bip32::{Mnemonic, Language},
+};
+use base64::prelude::*;
+
+use crate::constants::*;
 
 use std::sync::Arc;
 
-pub(crate) mod market_mappings;
-pub(crate) mod cosmos;
-pub(crate) mod account;
-pub(crate) mod constants;
-pub(crate) mod protobuf;
-pub(crate) mod indexer;
-pub(crate) mod client;
-pub(crate) mod faucet;
-pub(crate) mod transfers;
-pub(crate) mod websocket;
+pub mod client;
+pub mod chain;
+pub mod constants;
 
-pub struct Account {
-    signing_key: Arc<crypto::secp256k1::SigningKey>,
+pub struct Subaccount {
+    signing_key: Arc<SigningKey>,
     public_key: crypto::PublicKey,
     id: String,
 }
 
-pub struct Tx {
-
+#[derive(Debug)]
+#[repr(u32)]
+pub enum Market {
+    BTC = 0,
+    ETH = 1,
+    SOL = 5,
+    AVAX = 7,
+    MATIC = 3,
+    NEAR = 16,
+    LINK = 2,
+    ATOM = 11,
+    TRX = 15,
+    UNI = 13,
+    ETC = 19,
+    APE = 22,
+    PEPE = 28,
+    SEI = 29,
+    LTC = 9,
+    CRV = 4,
+    ARB = 24,
+    SUI = 31,
+    AAVE = 36,
+    SHIB = 30,
+    DOGE = 10,
+    MKR = 17,
+    WLD = 21,
+    BLUR = 25,
+    ADA = 6,
+    APT = 23,
+    FIL = 8,
+    COMP = 20,
+    TIA = 33,
+    JUP = 35,
+    DOT = 12,
+    LDO = 26,
+    BNB = 37,
+    XRP = 32,
+    OP = 27,
+    BCH = 14,
+    XLM = 18,
 }
 
-#[derive(Debug)]
-pub enum Market {
-    BTC,
-    ETH,
-    SOL,
-    FIL,
-    AVAX,
-    MATIC,
-    NEAR,
-    CRV,
-    LINK,
-    SNX,
-    DOT,
-    DOGE,
-    ATOM,
-    ENJ,
-    AAVE,
-    COMP,
-    ALGO,
-    ZRX,
-    EOS,
-    ICP,
-    TRX,
-    XTZ,
-    INCH,
-    SUSHI,
-    CELO,
-    UNI,
-    ETC,
+pub enum OrderType {
+    Market,
+    Limit,
+    StopMarket,
+    StopLimit,
+    TakeProfitMarket,
+    TakeProfitLimit,
+}
+
+impl Subaccount {
+
+    pub fn from_b64_key(key: String) -> anyhow::Result<Self> {
+
+        let sk_bytes = BASE64_STANDARD.decode(key)?;
+        let signing_key = SigningKey::from_slice(&sk_bytes).expect("Failed to read signing key");
+        let public_key = signing_key.public_key();
+        let id = public_key.account_id("dydx").expect("Failed to derive account ID");
+        Ok(Self {
+            signing_key: Arc::new(signing_key),
+            public_key,
+            id: id.to_string(),
+        })
+    }
+
+    pub fn from_mnemonic(phrase: &str) -> anyhow::Result<Self> {
+        let mnemonic = Mnemonic::new(phrase, Language::default())?;
+        let seed = mnemonic.to_seed("");
+        
+        let child_xprv = cosmrs::bip32::XPrv::derive_from_path(&seed.as_bytes(), &CHILD_PATH.parse().unwrap()).unwrap();
+        
+        let signing_key = SigningKey::from(child_xprv);
+        let public_key = signing_key.public_key();
+        let id = public_key.account_id("dydx").expect("Failed to derive account ID");
+        Ok(Self {
+            signing_key: Arc::new(signing_key),
+            public_key,
+            id: id.to_string(),
+        })
+    }
+
+    pub fn id(&self) -> String {
+        self.id.clone()
+    }
+
+    // TODO: Consider using something else?
+    pub fn signing_key(&self) -> Arc<SigningKey> {
+        Arc::clone(&self.signing_key)
+    }
+
+    // TODO: Consider using an Arc/Rc
+    pub fn public_key(&self) -> cosmrs::crypto::PublicKey {
+        self.public_key
+    }
+
 }
 
 #[cfg(test)]
@@ -62,26 +124,33 @@ mod test {
 
     use crate::{
         Market,
-        protobuf::{
-            order::{
-                Side,
-                GoodTilOneof,
-                TimeInForce,
-                ConditionType,
-            },
-        },
+        client::{CompositeClient, Endpoints},
     };
 
     #[tokio::test]
     pub async fn runthrough() {
         dotenv::dotenv().ok();
 
-        let mut private_key: String = env::var("MNEMONIC").expect("No private key found in environment");
+        let private_key: String = env::var("MNEMONIC").expect("No private key found in environment");
+        // let b64: String = env::var("PRIVATE_KEY").unwrap();
 
-        let account = Account::from_mnemonic(&private_key).unwrap();
-        println!("{:?}", account.id);
+        let account = Subaccount::from_mnemonic(&private_key).unwrap();
+        let composite = CompositeClient::new(account, Endpoints::mainnet(), M_IAPI);
 
-        let response = account.place_short_term_order(
+        let response = composite.indexer.list_perpetual_markets().await.unwrap();
+        println!("{:?}", response);
+
+        let v = Market::vec();
+        for market in v {
+            println!("{}", market);
+            assert!(market.atomic_resolution() == response.markets[&market.to_string()].atomicResolution as i8);
+            assert!(market.tick_size() == response.markets[&market.to_string()].tickSize.parse::<f32>().unwrap());
+            assert!(market.step_size() == response.markets[&market.to_string()].stepSize.parse::<f32>().unwrap());
+            assert!(market.subticks_per_tick() == response.markets[&market.to_string()].subticksPerTick as u64);
+        }
+
+        /*
+        let response = composite.place_short_term_order(
             0,
             33,
             Market::ETH,
@@ -94,6 +163,6 @@ mod test {
             ConditionType::Unspecified,
             3000.0,
         ).await.unwrap();
-        println!("{:?}", response);
+        */
     }
 }

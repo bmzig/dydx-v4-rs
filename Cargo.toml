@@ -12,6 +12,7 @@ anyhow = { version = "1.0.6" }
 reqwest = { version = "0.11.14", features = ["json"] }
 base64 = { version = "0.21" }
 serde_json = { version = "1" }
+serde = { version = "1", features = ["derive"] }
 
 rand = { version = "0.8.5" }
 url = { version = "2.3.1" }
@@ -20,7 +21,7 @@ futures-util = { version = "0.3.26" }
 
 cosmrs = { version = "0.15" }
 prost = { version = "0.12" }
-iop-keyvault = { version = "0.0.16" }
+bip32 = { version = "0.5" }
 
 # Efficiency
 concat-string = { version = "1.0.1" }

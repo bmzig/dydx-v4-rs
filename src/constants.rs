@@ -19,5 +19,17 @@ pub const M_IAPI: &str = "https://indexer.dydx.trade/v4";
 pub const M_WS: &str = "wss://indexer.dydx.trade/v4/ws";
 
 // Testnet
-pub const T_IAPI: &str = "https://indexer.dydx.trade/v4";
-pub const T_WS: &str = "wss://indexer.dydx.trade/v4/ws";
+pub const T_IAPI: &str = "https://dydx-testnet.imperator.co/v4";
+pub const T_WS: &str = "wss://indexer.v4testnet.dydx.exchange/v4/ws";
+
+// Cosmos Information
+pub const CHILD_PATH: &str = "m/44'/118'/0'/0/0";
+
+///// DYDX Constants /////
+pub const STEP_BASE_QUANTUMS: u64 = 1000000;
+pub const QUANTUM_CONVERSION_EXPONENT: i8 = -9;
+pub const QUOTE_QUANTUMS_ATOMIC_RESOLUTION: i8 = -6;
+
+pub const ORDER_FLAGS_SHORT_TERM: u8 = 0;
+pub const ORDER_FLAGS_CONDITIONAL: u8 = 32;
+pub const ORDER_FLAGS_LONG_TERM: u8 = 64;
