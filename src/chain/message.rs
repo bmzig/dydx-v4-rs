@@ -4,7 +4,6 @@ pub struct MsgPlaceOrder {
     #[prost(message, optional, tag = "1")]
     pub order: ::core::option::Option<Order>,
 }
-
 /// AssetPositions define an account’s positions of an `Asset`.
 /// Therefore they hold any information needed to trade on Spot and Margin.
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -421,3 +420,34 @@ pub struct TransactionOrdering {
     #[prost(uint32, tag = "2")]
     pub transaction_index: u32,
 }
+
+/// MsgCancelOrder is a request type used for canceling orders.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgCancelOrder {
+    #[prost(message, optional, tag = "1")]
+    pub order_id: ::core::option::Option<OrderId>,
+    /// Information about when the order cancellation expires.
+    #[prost(oneof = "msg_cancel_order::GoodTilOneof", tags = "2, 3")]
+    pub good_til_oneof: ::core::option::Option<msg_cancel_order::GoodTilOneof>,
+}
+/// Nested message and enum types in `MsgCancelOrder`.
+pub mod msg_cancel_order {
+    /// Information about when the order cancellation expires.
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum GoodTilOneof {
+        /// The last block this order cancellation can be executed at.
+        /// Used only for Short-Term orders and must be zero for stateful orders.
+        #[prost(uint32, tag = "2")]
+        GoodTilBlock(u32),
+        /// good_til_block_time represents the unix timestamp (in seconds) at which a
+        /// stateful order cancellation will be considered expired. The
+        /// good_til_block_time is always evaluated against the previous block's
+        /// `BlockTime` instead of the block in which the order is committed.
+        /// This value must be zero for Short-Term orders.
+        #[prost(fixed32, tag = "3")]
+        GoodTilBlockTime(u32),
+    }
+}
+

@@ -9,12 +9,14 @@ use crate::{
         SubaccountId,
         OrderId,
         MsgPlaceOrder,
+        MsgCancelOrder,
         order::{
             GoodTilOneof,
             TimeInForce,
             ConditionType,
             Side,
         },
+        msg_cancel_order,
     },
 };
 
@@ -36,7 +38,7 @@ impl ValidatorClient {
         quantums: u64,
         subticks: u64,
         time_in_force: TimeInForce,
-        order_flags: u8,
+        order_flags: u32,
         reduce_only: bool,
         good_til_oneof: GoodTilOneof,
         client_metadata: u32,
@@ -52,7 +54,7 @@ impl ValidatorClient {
         let order_id = OrderId {
             subaccount_id: Some(subaccount_id),
             client_id,
-            order_flags: order_flags as u32,
+            order_flags: order_flags,
             clob_pair_id: market as u32,
         };
 
@@ -73,57 +75,45 @@ impl ValidatorClient {
             order: Some(order),
         };
 
-        msg.execute(&self.subaccount, 16933).await
-        /*
+        msg.execute(&self.subaccount, 0).await
+        
+    }
+    
+    pub async fn cancel_order(
+        &self,
+        subaccount_number: u32,
+        client_id: u32,
+        clob_pair_id: u32,
+        order_flags: u32,
+        good_til_oneof: GoodTilOneof,
+    ) -> anyhow::Result<String> {
 
-        let any = Any {
-            type_url: "/dydxprotocol.clob.MsgPlaceOrder".to_string(),
-            value: msg.encode_to_vec(),
+        // TODO: Clean this up probably by tweaking protobuf messages
+        let good_til_oneof = {
+            match good_til_oneof {
+                GoodTilOneof::GoodTilBlock(x) => msg_cancel_order::GoodTilOneof::GoodTilBlock(x),
+                GoodTilOneof::GoodTilBlockTime(x) => msg_cancel_order::GoodTilOneof::GoodTilBlockTime(x),
+            }
+        };
+        
+        let subaccount_id = SubaccountId {
+            owner: self.subaccount.id(),
+            number: subaccount_number,
         };
 
-        let mut bodybuilder = BodyBuilder::new();
-        bodybuilder.msg(any);
-        let body = bodybuilder.finish();
+        let order_id = OrderId {
+            subaccount_id: Some(subaccount_id),
+            client_id,
+            order_flags,
+            clob_pair_id,
+        };
 
-        let signer_info = SignerInfo::single_direct(Some(self.subaccount.public_key()), 4);
+        let msg = MsgCancelOrder {
+            order_id: Some(order_id),
+            good_til_oneof: Some(good_til_oneof),
+        };
 
-        let coin = Coin::new(0, "adydx").unwrap();
-        let fee = Fee::from_amount_and_gas(coin, 0u64);
-
-        let auth_info = signer_info.auth_info(fee);
-        let chain_id = "dydx-mainnet-1".parse()?;
-
-        let sign_doc = SignDoc::new(
-            &body,
-            &auth_info,
-            &chain_id,
-            16933
-        ).unwrap();
-
-        let raw = sign_doc.sign(&self.subaccount.signing_key()).unwrap();
-        let bytes = raw.to_bytes().unwrap();
-
-        let txBytes = BASE64_STANDARD.encode(bytes);
-        let mode = "BROADCAST_MODE_SYNC".to_string();
-
-        let mut json = HashMap::new();
-        json.insert("txBytes", txBytes);
-        json.insert("mode", mode);
-
-        let client = Client::new();
-
-        let url = url::Url::parse(M_TX_ENDPOINT).unwrap();
-        let response = client.post(url)
-            .json(&json)
-            .send()
-            .await?
-            .text()
-            .await?;
-
-        Ok(response)
-        Ok(String::new())
-        */
-
+        msg.execute(&self.subaccount, 0).await
     }
 
     pub fn transfer(&self) -> anyhow::Result<String> {

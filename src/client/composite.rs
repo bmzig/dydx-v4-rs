@@ -17,6 +17,8 @@ use crate::{
     constants::*,
 };
 
+// TODO: The subaccount_number flag should be moved to a field in the Subaccount struct.
+
 impl CompositeClient {
 
     pub fn new(subaccount: Subaccount, validator_endpoints: Endpoints, indexer_endpoint: &str) -> Self {
@@ -137,15 +139,31 @@ impl CompositeClient {
     }
 
     pub async fn cancel_short_term_order(
-        &self
+        &self,
+        subaccount_number: u32,
+        client_id: u32,
+        market: Market,
+        good_til_block: u32,
     ) -> anyhow::Result<String> {
-        unimplemented!();
+
+        let good_til_oneof = GoodTilOneof::GoodTilBlock(good_til_block);
+        let orderbook_id = market as u32;
+
+        self.validator.cancel_order(subaccount_number, client_id, orderbook_id, ORDER_FLAGS_SHORT_TERM, good_til_oneof).await
     }
 
-    pub async fn cancel_stateful_order(
-        &self
+    pub async fn cancel_order(
+        &self,
+        subaccount_number: u32,
+        client_id: u32,
+        market: Market,
+        order_flags: u32,
+        good_til_oneof: GoodTilOneof,
     ) -> anyhow::Result<String> {
-        unimplemented!();
+
+        let orderbook_id = market as u32;
+
+        self.validator.cancel_order(subaccount_number, client_id, orderbook_id, order_flags, good_til_oneof).await
     }
 
     pub async fn transfer(

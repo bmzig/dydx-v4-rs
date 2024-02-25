@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Account {
-    subaccount_number: u64,
+    subaccountNumber: u64,
     address: String,
 }
 
@@ -24,14 +24,14 @@ pub struct FillResponseObject {
     pub liquidity: String,
     pub r#type: String,
     pub market: String,
-    pub market_type: String,
+    pub marketType: String,
     pub price: String,
     pub size: String,
     pub fee: String,
-    pub created_at: String,
-    pub created_at_height: String,
-    pub order_id: String,
-    pub client_metadata: String,
+    pub createdAt: String,
+    pub createdAtHeight: String,
+    pub orderId: String,
+    pub clientMetadata: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -40,22 +40,22 @@ pub struct PerpetualPositionResponseObject {
     pub status: String,
     pub side: String,
     pub size: String,
-    pub max_size: String,
-    pub entry_price: String,
-    pub realized_pnl: String,
-    pub created_at: String,
-    pub created_at_height: String,
-    pub sum_open: String,
-    pub sum_close: String,
-    pub net_funding: String,
-    pub unrealized_pnl: String,
-    pub closed_at: String,
-    pub exit_price: String,
+    pub maxSize: String,
+    pub entryPrice: String,
+    pub realizedPnl: String,
+    pub createdAt: String,
+    pub createdAtHeight: String,
+    pub sumOpen: String,
+    pub sumClose: String,
+    pub netFunding: String,
+    pub unrealizedPnl: String,
+    pub closedAt: String,
+    pub exitPrice: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PerpetualPositionsResponse {
-    pub perpetual_positions: Vec<PerpetualPositionResponseObject>,
+    pub perpetualPositions: HashMap<String, PerpetualPositionResponseObject>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -63,44 +63,44 @@ pub struct AssetPositionResponseObject {
     pub symbol: String,
     pub side: String,
     pub size: String,
-    pub asset_id: String,
+    pub assetId: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AssetPositionsResponse {
-    pub asset_positions: Vec<AssetPositionResponseObject>,
+    pub assetPositions: HashMap<String, AssetPositionResponseObject>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SubaccountResponse {
     pub address: String,
-    pub subaccount_number: f32,
+    pub subaccountNumber: f32,
     pub equity: String,
-    pub free_collateral: String,
-    pub open_perpetual_positions: PerpetualPositionsResponse,
-    pub asset_positions: AssetPositionsResponse,
-    pub margin_enabled: bool,
+    pub freeCollateral: String,
+    pub openPerpetualPositions: HashMap<String, PerpetualPositionResponseObject>,
+    pub assetPositions: HashMap<String, AssetPositionResponseObject>,
+    pub marginEnabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AddressResponse {
     pub subaccounts: Vec<SubaccountResponse>,
-    pub total_trading_rewards: String,
+    pub totalTradingRewards: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CandleResponseObject {
-    pub started_at: String,
+    pub startedAt: String,
     pub ticker: String,
     pub resolution: String,
     pub low: String,
     pub high: String,
     pub open: String,
     pub close: String,
-    pub base_token_volume: String,
-    pub usd_volume: String,
+    pub baseTokenVolume: String,
+    pub usdVolume: String,
     pub trades: f32,
-    pub starting_open_interest: String,
+    pub startingOpenInterest: String,
     pub id: String,
 }
 
@@ -122,9 +122,9 @@ pub struct FillResponse {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoricalBlockTradingReward {
-    pub trading_reward: String,
-    pub created_at: String,
-    pub created_at_height: String,
+    pub tradingReward: String,
+    pub createdAt: String,
+    pub createdAtHeight: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -137,13 +137,13 @@ pub struct HistoricalFundingResponseObject {
     pub ticker: String,
     pub rate: String,
     pub price: String,
-    pub effective_at: String,
-    pub effective_at_height: String,
+    pub effectiveAt: String,
+    pub effectiveAtHeight: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoricalFundingResponse {
-    pub historical_funding: Vec<HistoricalFundingResponseObject>,
+    pub historicalFunding: Vec<HistoricalFundingResponseObject>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -151,25 +151,25 @@ pub struct PnlTicksResponseObject {
     pub id: String,
     pub subaccount_id: String,
     pub equity: String,
-    pub total_pnl: String,
-    pub net_transfers: String,
-    pub created_at: String,
-    pub block_height: String,
-    pub block_time: String,
+    pub totalPnl: String,
+    pub netTransfers: String,
+    pub createdAt: String,
+    pub blockHeight: String,
+    pub blockTime: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoricalPnlResponse {
-    pub historical_pnl: Vec<PnlTicksResponseObject>,
+    pub historicalPnl: Vec<PnlTicksResponseObject>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HistoricalTradingRewardAggregation {
-    pub trading_reward: String,
-    pub started_at: String,
-    pub started_at_height: String,
-    pub ended_at: String,
-    pub ended_at_height: String,
+    pub tradingReward: String,
+    pub startedAt: String,
+    pub startedAtHeight: String,
+    pub endedAt: String,
+    pub endedAtHeight: String,
     pub period: String,
 }
 
@@ -193,27 +193,27 @@ pub struct OrderbookResponseObject {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OrderResponseObject {
     pub id: String,
-    pub subaccount_id: String,
-    pub client_id: String,
-    pub clob_pair_id: String,
+    pub subaccountId: String,
+    pub clientId: String,
+    pub clobPairId: String,
     pub side: String,
     pub size: String,
-    pub total_filled: String,
+    pub totalFilled: String,
     pub price: String,
     pub r#type: String,
-    pub reduce_only: bool,
-    pub order_flags: String,
-    pub good_til_block: String,
-    pub good_til_block_time: String,
-    pub created_at_height: String,
-    pub client_metadata: String,
-    pub trigger_price: String,
-    pub time_in_force: String,
+    pub reduceOnly: bool,
+    pub orderFlags: String,
+    pub goodTilBlock: String,
+    pub goodTilBlock_time: String,
+    pub createdAtHeight: String,
+    pub clientMetadata: String,
+    pub triggerPrice: String,
+    pub timeInForce: String,
     pub status: String,
-    pub post_only: bool,
+    pub postOnly: bool,
     pub ticker: String,
-    pub updated_at: String,
-    pub updated_at_height: String,
+    pub updatedAt: String,
+    pub updatedAtHeight: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -270,8 +270,8 @@ pub struct TradeResponseObject {
     pub size: String,
     pub price: String,
     pub r#type: String,
-    pub created_at: String,
-    pub created_at_height: String,
+    pub createdAt: String,
+    pub createdAtHeight: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -285,11 +285,11 @@ pub struct TransferResponseObject {
     pub sender: Account,
     pub recipient: Account,
     pub size: String,
-    pub created_at: String,
-    pub created_at_height: String,
+    pub createdAt: String,
+    pub createdAtHeight: String,
     pub symbol: String,
     pub r#type: String,
-    pub transaction_hash: String,
+    pub transactionHash: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

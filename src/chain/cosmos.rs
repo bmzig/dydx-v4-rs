@@ -19,8 +19,14 @@ use std::collections::HashMap;
 use crate::{
     constants::*,
     Subaccount,
-    chain::message::MsgPlaceOrder,
+    chain::message::{
+        MsgPlaceOrder,
+        MsgCancelOrder,
+    },
 };
+
+// TODO: Remove hardcoded mainnet values
+// Also make a trait so the code is less repetitive
 
 impl MsgPlaceOrder {
 
@@ -73,4 +79,58 @@ impl MsgPlaceOrder {
         Ok(response)
     }
 
+}
+
+impl MsgCancelOrder {
+    
+    pub(crate) async fn execute(&self, subaccount: &Subaccount, account_id: u64) -> anyhow::Result<String> {
+
+        let any = Any {
+            type_url: "/dydxprotocol.clob.MsgCancelOrder".to_string(),
+            value: self.encode_to_vec(),
+        };
+
+        let mut bodybuilder = BodyBuilder::new();
+        bodybuilder.msg(any);
+        let body = bodybuilder.finish();
+
+        let signer_info = SignerInfo::single_direct(Some(subaccount.public_key()), 4);
+
+        let coin = Coin::new(0, "adydx").unwrap();
+        let fee = Fee::from_amount_and_gas(coin, 0u64);
+
+        let auth_info = signer_info.auth_info(fee);
+        let chain_id = "dydx-mainnet-1".parse()?;
+
+        let sign_doc = SignDoc::new(
+            &body,
+            &auth_info,
+            &chain_id,
+            account_id,
+        ).unwrap();
+
+        let raw = sign_doc.sign(&subaccount.signing_key()).unwrap();
+        let bytes = raw.to_bytes().unwrap();
+
+        let txBytes = BASE64_STANDARD.encode(bytes);
+        let mode = "BROADCAST_MODE_SYNC".to_string();
+
+        println!("{:?}", txBytes);
+        let mut json = HashMap::new();
+        json.insert("txBytes", txBytes);
+        json.insert("mode", mode);
+
+        let client = Client::new();
+
+        let url = url::Url::parse(M_TX_ENDPOINT).unwrap();
+        let response = client.post(url)
+            .json(&json)
+            .send()
+            .await?
+            .text()
+            .await?;
+
+        Ok(response)
+
+    }
 }

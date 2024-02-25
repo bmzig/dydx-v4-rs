@@ -124,6 +124,7 @@ mod test {
 
     use crate::{
         Market,
+        chain::message::order::{Side, TimeInForce},
         client::{CompositeClient, Endpoints},
     };
 
@@ -135,34 +136,43 @@ mod test {
         // let b64: String = env::var("PRIVATE_KEY").unwrap();
 
         let account = Subaccount::from_mnemonic(&private_key).unwrap();
+        let id = account.id();
         let composite = CompositeClient::new(account, Endpoints::mainnet(), M_IAPI);
 
+        let acc = composite.indexer.get_address(id).await.unwrap();
+        println!("{:?}", acc);
+
         let response = composite.indexer.list_perpetual_markets().await.unwrap();
-        println!("{:?}", response);
+        // println!("{:?}", response);
 
         let v = Market::vec();
         for market in v {
-            println!("{}", market);
+            // println!("{}", market);
             assert!(market.atomic_resolution() == response.markets[&market.to_string()].atomicResolution as i8);
             assert!(market.tick_size() == response.markets[&market.to_string()].tickSize.parse::<f32>().unwrap());
             assert!(market.step_size() == response.markets[&market.to_string()].stepSize.parse::<f32>().unwrap());
             assert!(market.subticks_per_tick() == response.markets[&market.to_string()].subticksPerTick as u64);
         }
 
-        /*
-        let response = composite.place_short_term_order(
+        let order_response = composite.place_short_term_order(
             0,
-            33,
             Market::ETH,
             Side::Buy,
+            3000.0,
             0.01,
-            GoodTilOneof::GoodTilBlock(200),
+            33,
+            200,
             TimeInForce::Ioc,
             false,
-            0,
-            ConditionType::Unspecified,
-            3000.0,
+            None,
         ).await.unwrap();
-        */
+        println!("{}", order_response);
+        let cancel_response = composite.cancel_short_term_order(
+            0,
+            23,
+            Market::ETH,
+            200,
+        ).await.unwrap();
+        println!("{}", cancel_response);
     }
 }

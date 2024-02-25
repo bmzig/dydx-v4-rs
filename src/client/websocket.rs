@@ -1,8 +1,6 @@
-use tokio_tungstenite::connect_async;
-use futures_util::{StreamExt, SinkExt};
+use tokio_tungstenite::{connect_async, WebSocketStream};
+use futures_util::{StreamExt, SinkExt, stream::SplitStream};
 use concat_string::concat_string;
-use tokio_tungstenite::WebSocketStream;
-use futures_util::stream::SplitStream;
 
 use crate::client::WebsocketClient;
 
