@@ -115,7 +115,6 @@ impl MsgCancelOrder {
         let txBytes = BASE64_STANDARD.encode(bytes);
         let mode = "BROADCAST_MODE_SYNC".to_string();
 
-        println!("{:?}", txBytes);
         let mut json = HashMap::new();
         json.insert("txBytes", txBytes);
         json.insert("mode", mode);

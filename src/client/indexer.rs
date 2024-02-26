@@ -137,7 +137,6 @@ impl IndexerClient {
     pub async fn get(&self, request: String) -> anyhow::Result<String> {
         let client = Client::new();
 
-        println!("{}", request);
         let response = client.get(request)
             .header("Accept", "appplication/json")
             .send()

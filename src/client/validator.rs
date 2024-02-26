@@ -31,7 +31,6 @@ impl ValidatorClient {
 
     pub async fn place_order(
         &self,
-        subaccount_number: u32,
         client_id: u32,
         market: Market,
         side: Side,
@@ -48,7 +47,7 @@ impl ValidatorClient {
 
         let subaccount_id = SubaccountId {
             owner: self.subaccount.id(),
-            number: subaccount_number,
+            number: self.subaccount.number(),
         };
 
         let order_id = OrderId {
@@ -75,13 +74,12 @@ impl ValidatorClient {
             order: Some(order),
         };
 
-        msg.execute(&self.subaccount, 0).await
+        msg.execute(&self.subaccount, self.subaccount.account_number()).await
         
     }
     
     pub async fn cancel_order(
         &self,
-        subaccount_number: u32,
         client_id: u32,
         clob_pair_id: u32,
         order_flags: u32,
@@ -98,7 +96,7 @@ impl ValidatorClient {
         
         let subaccount_id = SubaccountId {
             owner: self.subaccount.id(),
-            number: subaccount_number,
+            number: self.subaccount.number(),
         };
 
         let order_id = OrderId {
@@ -113,7 +111,7 @@ impl ValidatorClient {
             good_til_oneof: Some(good_til_oneof),
         };
 
-        msg.execute(&self.subaccount, 0).await
+        msg.execute(&self.subaccount, self.subaccount.account_number()).await
     }
 
     pub fn transfer(&self) -> anyhow::Result<String> {

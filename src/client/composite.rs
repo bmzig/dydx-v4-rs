@@ -32,7 +32,6 @@ impl CompositeClient {
 
     pub async fn place_short_term_order(
         &self,
-        subaccount_number: u32,
         market: Market,
         side: Side, 
         price: f32,
@@ -56,7 +55,6 @@ impl CompositeClient {
         if market.subticks_per_tick() > subticks { subticks = market.subticks_per_tick(); }
 
         self.validator.place_order(
-            subaccount_number,
             client_id,
             market,
             side,
@@ -75,7 +73,6 @@ impl CompositeClient {
 
     pub async fn place_order(
         &self,
-        subaccount_number: u32,
         market: Market,
         order_type: OrderType,
         side: Side,
@@ -122,7 +119,6 @@ impl CompositeClient {
         };
 
         self.validator.place_order(
-            subaccount_number,
             client_id,
             market,
             side,
@@ -140,7 +136,6 @@ impl CompositeClient {
 
     pub async fn cancel_short_term_order(
         &self,
-        subaccount_number: u32,
         client_id: u32,
         market: Market,
         good_til_block: u32,
@@ -149,12 +144,11 @@ impl CompositeClient {
         let good_til_oneof = GoodTilOneof::GoodTilBlock(good_til_block);
         let orderbook_id = market as u32;
 
-        self.validator.cancel_order(subaccount_number, client_id, orderbook_id, ORDER_FLAGS_SHORT_TERM, good_til_oneof).await
+        self.validator.cancel_order(client_id, orderbook_id, ORDER_FLAGS_SHORT_TERM, good_til_oneof).await
     }
 
     pub async fn cancel_order(
         &self,
-        subaccount_number: u32,
         client_id: u32,
         market: Market,
         order_flags: u32,
@@ -163,7 +157,7 @@ impl CompositeClient {
 
         let orderbook_id = market as u32;
 
-        self.validator.cancel_order(subaccount_number, client_id, orderbook_id, order_flags, good_til_oneof).await
+        self.validator.cancel_order(client_id, orderbook_id, order_flags, good_til_oneof).await
     }
 
     pub async fn transfer(

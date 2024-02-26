@@ -3,6 +3,8 @@ use cosmrs::{
     bip32::{Mnemonic, Language},
 };
 use base64::prelude::*;
+use reqwest::Client;
+use concat_string::concat_string;
 
 use crate::constants::*;
 
@@ -16,6 +18,8 @@ pub struct Subaccount {
     signing_key: Arc<SigningKey>,
     public_key: crypto::PublicKey,
     id: String,
+    number: u32, // This is the subaccount number
+    account_number: u64, // This is the cosmos assigned account number used for ordering
 }
 
 #[derive(Debug)]
@@ -71,20 +75,38 @@ pub enum OrderType {
 
 impl Subaccount {
 
-    pub fn from_b64_key(key: String) -> anyhow::Result<Self> {
+    // TODO: Differentiate between testnet and mainnet
+    // TODO: Consider getting the account number in a different manner. 
+    pub async fn from_b64_key(key: String) -> anyhow::Result<Self> {
 
         let sk_bytes = BASE64_STANDARD.decode(key)?;
         let signing_key = SigningKey::from_slice(&sk_bytes).expect("Failed to read signing key");
         let public_key = signing_key.public_key();
         let id = public_key.account_id("dydx").expect("Failed to derive account ID");
+
+        let url = concat_string!(M_ACC_ENDPOINT, "/", id);
+        let client = Client::new();
+
+        let response = client.get(url)
+            .header("Accept", "application/json")
+            .send()
+            .await?
+            .text()
+            .await?;
+
+        let split = response.split(",").collect::<Vec<&str>>();
+        let account_number = split[split.len()-2].split("\"").collect::<Vec<&str>>()[3].parse::<u64>().unwrap();
+
         Ok(Self {
             signing_key: Arc::new(signing_key),
             public_key,
             id: id.to_string(),
+            number: 0,
+            account_number,
         })
     }
 
-    pub fn from_mnemonic(phrase: &str) -> anyhow::Result<Self> {
+    pub async fn from_mnemonic(phrase: &str) -> anyhow::Result<Self> {
         let mnemonic = Mnemonic::new(phrase, Language::default())?;
         let seed = mnemonic.to_seed("");
         
@@ -93,11 +115,35 @@ impl Subaccount {
         let signing_key = SigningKey::from(child_xprv);
         let public_key = signing_key.public_key();
         let id = public_key.account_id("dydx").expect("Failed to derive account ID");
+
+        let url = concat_string!(M_ACC_ENDPOINT, "/", id);
+        let client = Client::new();
+
+        let response = client.get(url)
+            .header("Accept", "application/json")
+            .send()
+            .await?
+            .text()
+            .await?;
+        
+        let split = response.split(",").collect::<Vec<&str>>();
+        let account_number = split[split.len()-2].split("\"").collect::<Vec<&str>>()[3].parse::<u64>().unwrap();
+
         Ok(Self {
             signing_key: Arc::new(signing_key),
             public_key,
             id: id.to_string(),
+            number: 0,
+            account_number,
         })
+    }
+
+    pub(crate) fn account_number(&self) -> u64 {
+        self.account_number
+    }
+
+    pub(crate) fn number(&self) -> u32 {
+        self.number
     }
 
     pub fn id(&self) -> String {
@@ -135,7 +181,7 @@ mod test {
         let private_key: String = env::var("MNEMONIC").expect("No private key found in environment");
         // let b64: String = env::var("PRIVATE_KEY").unwrap();
 
-        let account = Subaccount::from_mnemonic(&private_key).unwrap();
+        let account = Subaccount::from_mnemonic(&private_key).await.unwrap();
         let id = account.id();
         let composite = CompositeClient::new(account, Endpoints::mainnet(), M_IAPI);
 
@@ -155,7 +201,6 @@ mod test {
         }
 
         let order_response = composite.place_short_term_order(
-            0,
             Market::ETH,
             Side::Buy,
             3000.0,
@@ -168,7 +213,6 @@ mod test {
         ).await.unwrap();
         println!("{}", order_response);
         let cancel_response = composite.cancel_short_term_order(
-            0,
             23,
             Market::ETH,
             200,
