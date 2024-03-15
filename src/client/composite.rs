@@ -21,9 +21,9 @@ use crate::{
 
 impl CompositeClient {
 
-    pub fn new(subaccount: Subaccount, validator_endpoints: Endpoints, indexer_endpoint: &str) -> Self {
+    pub fn new(validator_endpoints: Endpoints, indexer_endpoint: &str) -> Self {
         let indexer = IndexerClient::new(indexer_endpoint);
-        let validator = ValidatorClient::new(subaccount, validator_endpoints);
+        let validator = ValidatorClient::new(validator_endpoints);
         Self {
             indexer,
             validator,
@@ -32,6 +32,7 @@ impl CompositeClient {
 
     pub async fn place_short_term_order(
         &self,
+        subaccount: &Subaccount,
         market: Market,
         side: Side, 
         price: f32,
@@ -55,6 +56,7 @@ impl CompositeClient {
         if market.subticks_per_tick() > subticks { subticks = market.subticks_per_tick(); }
 
         self.validator.place_order(
+            subaccount,
             client_id,
             market,
             side,
@@ -73,6 +75,7 @@ impl CompositeClient {
 
     pub async fn place_order(
         &self,
+        subaccount: &Subaccount,
         market: Market,
         order_type: OrderType,
         side: Side,
@@ -119,6 +122,7 @@ impl CompositeClient {
         };
 
         self.validator.place_order(
+            subaccount,
             client_id,
             market,
             side,
@@ -136,19 +140,27 @@ impl CompositeClient {
 
     pub async fn cancel_short_term_order(
         &self,
+        subaccount: &Subaccount,
         client_id: u32,
         market: Market,
         good_til_block: u32,
     ) -> anyhow::Result<String> {
 
-        let good_til_oneof = GoodTilOneof::GoodTilBlock(good_til_block);
+    let good_til_oneof = GoodTilOneof::GoodTilBlock(good_til_block);
         let orderbook_id = market as u32;
 
-        self.validator.cancel_order(client_id, orderbook_id, ORDER_FLAGS_SHORT_TERM, good_til_oneof).await
+        self.validator.cancel_order(
+            subaccount,
+            client_id, 
+            orderbook_id, 
+            ORDER_FLAGS_SHORT_TERM, 
+            good_til_oneof
+            ).await
     }
 
     pub async fn cancel_order(
         &self,
+        subaccount: &Subaccount,
         client_id: u32,
         market: Market,
         order_flags: u32,
@@ -157,25 +169,57 @@ impl CompositeClient {
 
         let orderbook_id = market as u32;
 
-        self.validator.cancel_order(client_id, orderbook_id, order_flags, good_til_oneof).await
+        self.validator.cancel_order(
+            subaccount,
+            client_id, 
+            orderbook_id, 
+            order_flags, 
+            good_til_oneof
+        ).await
     }
 
     pub async fn transfer(
         &self,
+        subaccount: &Subaccount,
+        recipient_address: String,
+        recipient_subaccount_number: u32,
+        amount: f32,
     ) -> anyhow::Result<String> {
-        unimplemented!();
+        let int_amount = ((amount * 10000000.0).floor()) as u64;
+        self.validator.transfer(
+            subaccount,
+            recipient_address, 
+            recipient_subaccount_number, 
+            0, 
+            int_amount
+        ).await
     }
 
-    pub async fn deposit(
+    pub async fn deposit_to_subaccount(
         &self,
+        subaccount: &Subaccount,
+        amount: f32,
     ) -> anyhow::Result<String> {
-        unimplemented!();
+        let int_amount = ((amount * 10000000.0).floor()) as u64;
+        self.validator.deposit(
+            subaccount,
+            0,
+            int_amount
+        ).await
     }
 
-    pub async fn withdraw(
+    pub async fn withdraw_from_subaccount(
         &self,
+        subaccount: &Subaccount,
+        amount: f32,
     ) -> anyhow::Result<String> {
-        unimplemented!();
+
+        let quantums = ((amount * 10000000.0).floor()) as u64;
+        self.validator.withdraw(
+            subaccount,
+            0,
+            quantums
+        ).await
     }
 
 }

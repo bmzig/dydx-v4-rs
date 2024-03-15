@@ -21,7 +21,7 @@ pub struct IndexerClient {
 }
 
 pub struct ValidatorClient {
-    pub subaccount: Subaccount,
+    // pub subaccount: Subaccount,
     pub endpoints: Endpoints,
 }
 

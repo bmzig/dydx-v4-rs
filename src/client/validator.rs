@@ -17,20 +17,26 @@ use crate::{
             Side,
         },
         msg_cancel_order,
+
+        MsgCreateTransfer,
+        Transfer,
+        MsgDepositToSubaccount,
+        MsgWithdrawFromSubaccount,
+        Coin,
     },
 };
 
 impl ValidatorClient {
 
-    pub fn new(subaccount: Subaccount, endpoints: Endpoints) -> Self {
+    pub fn new(endpoints: Endpoints) -> Self {
         Self {
-            subaccount,
             endpoints,
         }
     }
 
     pub async fn place_order(
         &self,
+        subaccount: &Subaccount,
         client_id: u32,
         market: Market,
         side: Side,
@@ -46,8 +52,8 @@ impl ValidatorClient {
     ) -> anyhow::Result<String> {
 
         let subaccount_id = SubaccountId {
-            owner: self.subaccount.id(),
-            number: self.subaccount.number(),
+            owner: subaccount.id(),
+            number: subaccount.number(),
         };
 
         let order_id = OrderId {
@@ -74,12 +80,13 @@ impl ValidatorClient {
             order: Some(order),
         };
 
-        msg.execute(&self.subaccount, self.subaccount.account_number()).await
+        msg.execute(&subaccount).await
         
     }
     
     pub async fn cancel_order(
         &self,
+        subaccount: &Subaccount,
         client_id: u32,
         clob_pair_id: u32,
         order_flags: u32,
@@ -95,8 +102,8 @@ impl ValidatorClient {
         };
         
         let subaccount_id = SubaccountId {
-            owner: self.subaccount.id(),
-            number: self.subaccount.number(),
+            owner: subaccount.id(),
+            number: subaccount.number(),
         };
 
         let order_id = OrderId {
@@ -111,23 +118,84 @@ impl ValidatorClient {
             good_til_oneof: Some(good_til_oneof),
         };
 
-        msg.execute(&self.subaccount, self.subaccount.account_number()).await
+        msg.execute(subaccount).await
     }
 
-    pub fn transfer(&self) -> anyhow::Result<String> {
-        unimplemented!();
+    pub async fn transfer(
+        &self,
+        subaccount: &Subaccount,
+        recipient_address: String,
+        subaccount_number: u32,
+        asset_id: u32,
+        amount: u64,
+    ) -> anyhow::Result<String> {
+        let sender = SubaccountId {
+            owner: subaccount.id(),
+            number: subaccount.number(),
+        };
+
+        let recipient = SubaccountId {
+            owner: recipient_address,
+            number: subaccount_number,
+        };
+
+        let transfer = Transfer {
+            sender: Some(sender),
+            recipient: Some(recipient),
+            asset_id,
+            amount,
+        };
+
+        let msg = MsgCreateTransfer {
+            transfer: Some(transfer),
+        };
+
+        msg.execute(subaccount).await
     }
 
-    pub fn withdraw(&self) -> anyhow::Result<String> {
-        unimplemented!();
+    pub async fn deposit(
+        &self,
+        subaccount: &Subaccount,
+        asset_id: u32,
+        quantums: u64,
+    ) -> anyhow::Result<String> {
+
+        let recipient = SubaccountId {
+            owner: subaccount.id(),
+            number: subaccount.number(),
+        };
+
+        let msg = MsgDepositToSubaccount {
+            sender: subaccount.id(),
+            recipient: Some(recipient),
+            asset_id,
+            quantums,
+        };
+
+        msg.execute(subaccount).await
     }
 
-    pub fn deposit_to_subaccount(&self) -> anyhow::Result<String> {
-        unimplemented!();
-    }
+    pub async fn withdraw(
+        &self,
+        subaccount: &Subaccount,
+        asset_id: u32,
+        quantums: u64,
+    ) -> anyhow::Result<String> {
 
-    pub fn withdraw_from_subaccount(&self) -> anyhow::Result<String> {
-        unimplemented!();
+        let sender = SubaccountId {
+            owner: subaccount.id(),
+            number: subaccount.number(),
+        };
+
+        let msg = MsgWithdrawFromSubaccount {
+            sender: Some(sender),
+            recipient: subaccount.id(),
+            asset_id,
+            quantums,
+        };
+
+        msg.execute(subaccount).await
+
     }
 
 }

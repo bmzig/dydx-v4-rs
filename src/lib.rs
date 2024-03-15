@@ -3,6 +3,7 @@ use cosmrs::{
     bip32::{Mnemonic, Language},
 };
 use base64::prelude::*;
+use bip32::Seed;
 use reqwest::Client;
 use concat_string::concat_string;
 
@@ -14,12 +15,16 @@ pub mod client;
 pub mod chain;
 pub mod constants;
 
+pub struct Wallet {
+    seed: Seed,
+}
+
 pub struct Subaccount {
     signing_key: Arc<SigningKey>,
     public_key: crypto::PublicKey,
     id: String,
+    account_id: u64, // This is the cosmos assigned account number used for ordering
     number: u32, // This is the subaccount number
-    account_number: u64, // This is the cosmos assigned account number used for ordering
 }
 
 #[derive(Debug)]
@@ -73,8 +78,56 @@ pub enum OrderType {
     TakeProfitLimit,
 }
 
+impl Wallet {
+
+    pub fn from_mnemonic(phrase: &str) -> anyhow::Result<Self> {
+        let mnemonic = Mnemonic::new(phrase, Language::default())?;
+        let seed = mnemonic.to_seed("");
+
+        Ok(Self {
+            seed,
+        })
+    }
+    
+}
+
 impl Subaccount {
 
+    pub async fn new(wallet: Wallet, number: u32) -> anyhow::Result<Self> {
+    
+        let child_xprv = cosmrs::bip32::XPrv::derive_from_path(&wallet.seed.as_bytes(), &concat_string!(CHILD_PATH, number.to_string()).parse().unwrap()).unwrap();
+        
+        let signing_key = SigningKey::from(child_xprv);
+        let public_key = signing_key.public_key();
+        let id = public_key.account_id("dydx").expect("Failed to derive account ID");
+
+        let url = concat_string!(M_ACC_ENDPOINT, "/", id);
+        let client = Client::new();
+
+        let response = client.get(url)
+            .header("Accept", "application/json")
+            .send()
+            .await?
+            .text()
+            .await?;
+        
+        let split = response.split(",").collect::<Vec<&str>>();
+        let account_id = split[split.len()-2]
+            .split("\"")
+            .collect::<Vec<&str>>()[3]
+            .parse::<u64>()
+            .expect("Failed to fetch account number");
+
+        Ok(Self {
+            signing_key: Arc::new(signing_key),
+            public_key,
+            id: id.to_string(),
+            number: 0,
+            account_id,
+        })
+
+    }
+       
     // TODO: Differentiate between testnet and mainnet
     // TODO: Consider getting the account number in a different manner. 
     pub async fn from_b64_key(key: String) -> anyhow::Result<Self> {
@@ -95,55 +148,23 @@ impl Subaccount {
             .await?;
 
         let split = response.split(",").collect::<Vec<&str>>();
-        let account_number = split[split.len()-2].split("\"").collect::<Vec<&str>>()[3].parse::<u64>().unwrap();
+        let account_id = split[split.len()-2]
+            .split("\"")
+            .collect::<Vec<&str>>()[3]
+            .parse::<u64>()
+            .expect("Failed to fetch account id");
 
         Ok(Self {
             signing_key: Arc::new(signing_key),
             public_key,
             id: id.to_string(),
             number: 0,
-            account_number,
+            account_id,
         })
     }
 
-    pub async fn from_mnemonic(phrase: &str) -> anyhow::Result<Self> {
-        let mnemonic = Mnemonic::new(phrase, Language::default())?;
-        let seed = mnemonic.to_seed("");
-        
-        let child_xprv = cosmrs::bip32::XPrv::derive_from_path(&seed.as_bytes(), &CHILD_PATH.parse().unwrap()).unwrap();
-        
-        let signing_key = SigningKey::from(child_xprv);
-        let public_key = signing_key.public_key();
-        let id = public_key.account_id("dydx").expect("Failed to derive account ID");
-
-        let url = concat_string!(M_ACC_ENDPOINT, "/", id);
-        let client = Client::new();
-
-        let response = client.get(url)
-            .header("Accept", "application/json")
-            .send()
-            .await?
-            .text()
-            .await?;
-        
-        let split = response.split(",").collect::<Vec<&str>>();
-        let account_number = split[split.len()-2].split("\"").collect::<Vec<&str>>()[3].parse::<u64>().unwrap();
-
-        Ok(Self {
-            signing_key: Arc::new(signing_key),
-            public_key,
-            id: id.to_string(),
-            number: 0,
-            account_number,
-        })
-    }
-
-    pub(crate) fn account_number(&self) -> u64 {
-        self.account_number
-    }
-
-    pub(crate) fn number(&self) -> u32 {
-        self.number
+    pub(crate) fn account_id(&self) -> u64 {
+        self.account_id
     }
 
     pub fn id(&self) -> String {
@@ -158,6 +179,10 @@ impl Subaccount {
     // TODO: Consider using an Arc/Rc
     pub fn public_key(&self) -> cosmrs::crypto::PublicKey {
         self.public_key
+    }
+
+    pub(crate) fn number(&self) -> u32 {
+        self.number
     }
 
 }
@@ -178,13 +203,15 @@ mod test {
     pub async fn runthrough() {
         dotenv::dotenv().ok();
 
-        let private_key: String = env::var("MNEMONIC").expect("No private key found in environment");
+        let mnemonic: String = env::var("MNEMONIC").expect("No private key found in environment");
         // let b64: String = env::var("PRIVATE_KEY").unwrap();
 
-        let account = Subaccount::from_mnemonic(&private_key).await.unwrap();
-        let id = account.id();
-        let composite = CompositeClient::new(account, Endpoints::mainnet(), M_IAPI);
+        let wallet = Wallet::from_mnemonic(&mnemonic).unwrap();
+        let subaccount = Subaccount::new(wallet, 0).await.unwrap();
+        let id = subaccount.id();
+        let composite = CompositeClient::new(Endpoints::mainnet(), M_IAPI);
 
+        /*
         let acc = composite.indexer.get_address(id).await.unwrap();
         println!("{:?}", acc);
 
@@ -218,5 +245,13 @@ mod test {
             200,
         ).await.unwrap();
         println!("{}", cancel_response);
+        */
+
+        let other_phrase: String = env::var("MNEMONIC2").expect("No private key found in environment");
+        //let other_account = Subaccount::from_mnemonic(&other_phrase).await.unwrap();
+        
+        //let other_id = other_account.id();
+        let response = composite.transfer(&subaccount, id, 0, 2.0).await.unwrap();
+        println!("{:?}", response);
     }
 }

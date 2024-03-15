@@ -24,7 +24,7 @@ pub const T_IAPI: &str = "https://dydx-testnet.imperator.co/v4";
 pub const T_WS: &str = "wss://indexer.v4testnet.dydx.exchange/v4/ws";
 
 // Cosmos Information
-pub const CHILD_PATH: &str = "m/44'/118'/0'/0/0";
+pub const CHILD_PATH: &str = "m/44'/118'/0'/0/";
 
 ///// DYDX Constants /////
 pub const STEP_BASE_QUANTUMS: u64 = 1000000;

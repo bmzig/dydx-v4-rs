@@ -451,3 +451,98 @@ pub mod msg_cancel_order {
     }
 }
 
+
+
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgCreateTransfer { 
+    #[prost(message, optional, tag = "1")]
+    pub transfer: ::core::option::Option<Transfer>,
+}
+
+/// Transfer represents a single transfer between two subaccounts.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Transfer {
+    /// The sender subaccount ID.
+    #[prost(message, optional, tag = "1")]
+    pub sender: ::core::option::Option<SubaccountId>,
+    /// The recipient subaccount ID.
+    #[prost(message, optional, tag = "2")]
+    pub recipient: ::core::option::Option<SubaccountId>,
+    /// Id of the asset to transfer.
+    #[prost(uint32, tag = "3")]
+    pub asset_id: u32,
+    /// The amount of asset to transfer
+    #[prost(uint64, tag = "4")]
+    pub amount: u64,
+}
+/// MsgDepositToSubaccount represents a single transfer from an `x/bank`
+/// account to an `x/subaccounts` subaccount.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgDepositToSubaccount {
+    /// The sender wallet address.
+    #[prost(string, tag = "1")]
+    pub sender: ::prost::alloc::string::String,
+    /// The recipient subaccount ID.
+    #[prost(message, optional, tag = "2")]
+    pub recipient: ::core::option::Option<SubaccountId>,
+    /// Id of the asset to transfer.
+    #[prost(uint32, tag = "3")]
+    pub asset_id: u32,
+    /// The number of quantums of asset to transfer.
+    #[prost(uint64, tag = "4")]
+    pub quantums: u64,
+}
+/// MsgWithdrawFromSubaccount represents a single transfer from an
+/// `x/subaccounts` subaccount to an `x/bank` account.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgWithdrawFromSubaccount {
+    /// The sender subaccount ID.
+    #[prost(message, optional, tag = "2")]
+    pub sender: ::core::option::Option<SubaccountId>,
+    /// The recipient wallet address.
+    #[prost(string, tag = "1")]
+    pub recipient: ::prost::alloc::string::String,
+    /// Id of the asset to transfer.
+    #[prost(uint32, tag = "3")]
+    pub asset_id: u32,
+    /// The number of quantums of asset to transfer.
+    #[prost(uint64, tag = "4")]
+    pub quantums: u64,
+}
+/// MsgSendFromModuleToAccount represents a single transfer from a module
+/// to an `x/bank` account (can be either a module account address or a user
+/// account address).
+/// Should only be executed by governance.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct MsgSendFromModuleToAccount {
+    #[prost(string, tag = "1")]
+    pub authority: ::prost::alloc::string::String,
+    /// The sender module name.
+    #[prost(string, tag = "2")]
+    pub sender_module_name: ::prost::alloc::string::String,
+    /// The recipient account address (can be either a module account address
+    /// or a user account address).
+    #[prost(string, tag = "3")]
+    pub recipient: ::prost::alloc::string::String,
+    /// The coin to transfer, which specifies both denom and amount.
+    #[prost(message, optional, tag = "4")]
+    pub coin: ::core::option::Option<Coin>,
+}
+
+/// Coin defines a token with a denomination and an amount.
+///
+/// NOTE: The amount field is an Int which implements the custom method
+/// signatures required by gogoproto.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Coin {
+    #[prost(string, tag = "1")]
+    pub denom: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub amount: ::prost::alloc::string::String,
+}
