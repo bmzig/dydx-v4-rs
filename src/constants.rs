@@ -8,9 +8,9 @@ pub const M_TX_ENDPOINT: &str = "https://dydx-dao-api.polkachu.com:443/cosmos/tx
 pub const M_ACC_ENDPOINT: &str = "https://dydx-dao-api.polkachu.com:443/cosmos/auth/v1beta1/accounts";
 
 // Testnet
-pub const T_RPC: &str = "https://dydx-dao-rpc.polkachu.com:443";
-pub const T_REST: &str = "https://dydx-dao-api.polkachu.com:443";
-pub const T_GRPC: &str = "http://dydx-dao-grpc-3.polkachu.com:23890";
+pub const T_RPC: &str = "https://dydx-testnet-rpc.polkachu.com";
+pub const T_REST: &str = "https://dydx-testnet-api.polkachu.com";
+pub const T_GRPC: &str = "dydx-testnet-grpc.polkachu.com:23890";
 
 pub const T_TX_ENDPOINT: &str = "https://dydx-dao-api.polkachu.com:443/cosmos/tx/v1beta1/txs";
 

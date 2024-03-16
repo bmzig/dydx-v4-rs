@@ -4,27 +4,32 @@ use crate::{
         Endpoints,
     },
     Market, Subaccount, 
-    chain::message::{
-        Order,
-        SubaccountId,
-        OrderId,
-        MsgPlaceOrder,
-        MsgCancelOrder,
-        order::{
-            GoodTilOneof,
-            TimeInForce,
-            ConditionType,
-            Side,
+    chain::{
+        message::{
+            Order,
+            SubaccountId,
+            OrderId,
+            MsgPlaceOrder,
+            MsgCancelOrder,
+            order::{
+                GoodTilOneof,
+                TimeInForce,
+                ConditionType,
+                Side,
+            },
+            msg_cancel_order,
+            MsgCreateTransfer,
+            Transfer,
+            MsgDepositToSubaccount,
+            MsgWithdrawFromSubaccount,
+            Coin,
         },
-        msg_cancel_order,
-
-        MsgCreateTransfer,
-        Transfer,
-        MsgDepositToSubaccount,
-        MsgWithdrawFromSubaccount,
-        Coin,
+        cosmos::Msg,
     },
 };
+
+use cosmrs::Any;
+use prost::Message;
 
 impl ValidatorClient {
 
@@ -76,8 +81,15 @@ impl ValidatorClient {
             good_til_oneof: Some(good_til_oneof),
         };
 
-        let msg = MsgPlaceOrder {
+        let msg_place_order = MsgPlaceOrder {
             order: Some(order),
+        };
+
+        let msg = Msg {
+            any: Any {
+                type_url: "/dydxprotocol.clob.MsgPlaceOrder".to_string(),
+                value: msg_place_order.encode_to_vec(),
+            },
         };
 
         msg.execute(&subaccount).await
@@ -113,10 +125,18 @@ impl ValidatorClient {
             clob_pair_id,
         };
 
-        let msg = MsgCancelOrder {
+        let msg_cancel_order = MsgCancelOrder {
             order_id: Some(order_id),
             good_til_oneof: Some(good_til_oneof),
         };
+
+        let msg = Msg {
+            any: Any {
+                type_url: "/dydxprotocol.clob.MsgCancelOrder".to_string(),
+                value: msg_cancel_order.encode_to_vec(),
+            },
+        };
+
 
         msg.execute(subaccount).await
     }
@@ -146,8 +166,15 @@ impl ValidatorClient {
             amount,
         };
 
-        let msg = MsgCreateTransfer {
+        let msg_transfer = MsgCreateTransfer {
             transfer: Some(transfer),
+        };
+
+        let msg = Msg {
+            any: Any {
+                type_url: "/dydxprotocol.sending.MsgCreateTransfer".to_string(),
+                value: msg_transfer.encode_to_vec(),
+            },
         };
 
         msg.execute(subaccount).await
@@ -165,11 +192,18 @@ impl ValidatorClient {
             number: subaccount.number(),
         };
 
-        let msg = MsgDepositToSubaccount {
+        let msg_deposit = MsgDepositToSubaccount {
             sender: subaccount.id(),
             recipient: Some(recipient),
             asset_id,
             quantums,
+        };
+
+        let msg = Msg {
+            any: Any {
+                type_url: "/dydxprotocol.sending.MsgDepositToSubaccount".to_string(),
+                value: msg_deposit.encode_to_vec(),
+            },
         };
 
         msg.execute(subaccount).await
@@ -187,11 +221,18 @@ impl ValidatorClient {
             number: subaccount.number(),
         };
 
-        let msg = MsgWithdrawFromSubaccount {
+        let msg_withdraw = MsgWithdrawFromSubaccount {
             sender: Some(sender),
             recipient: subaccount.id(),
             asset_id,
             quantums,
+        };
+
+        let msg = Msg {
+            any: Any {
+                type_url: "/dydxprotocol.sending.MsgWithdrawFromSubaccount".to_string(),
+                value: msg_withdraw.encode_to_vec(),
+            },
         };
 
         msg.execute(subaccount).await

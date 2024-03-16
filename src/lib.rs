@@ -196,7 +196,7 @@ mod test {
     use crate::{
         Market,
         chain::message::order::{Side, TimeInForce},
-        client::{CompositeClient, Endpoints},
+        client::{CompositeClient, Endpoints, FaucetClient},
     };
 
     #[tokio::test]
@@ -211,8 +211,7 @@ mod test {
         let id = subaccount.id();
         let composite = CompositeClient::new(Endpoints::mainnet(), M_IAPI);
 
-        /*
-        let acc = composite.indexer.get_address(id).await.unwrap();
+        let acc = composite.indexer.get_address(id.clone()).await.unwrap();
         println!("{:?}", acc);
 
         let response = composite.indexer.list_perpetual_markets().await.unwrap();
@@ -228,6 +227,7 @@ mod test {
         }
 
         let order_response = composite.place_short_term_order(
+            &subaccount,
             Market::ETH,
             Side::Buy,
             3000.0,
@@ -240,18 +240,22 @@ mod test {
         ).await.unwrap();
         println!("{}", order_response);
         let cancel_response = composite.cancel_short_term_order(
+            &subaccount,
             23,
             Market::ETH,
             200,
         ).await.unwrap();
         println!("{}", cancel_response);
-        */
 
         let other_phrase: String = env::var("MNEMONIC2").expect("No private key found in environment");
         //let other_account = Subaccount::from_mnemonic(&other_phrase).await.unwrap();
         
         //let other_id = other_account.id();
         let response = composite.transfer(&subaccount, id, 0, 2.0).await.unwrap();
+        println!("{:?}", response);
+
+        let faucet = FaucetClient::default();
+        let response = faucet.fill_native("dydx1apugae55ldh27lsv4gmt37vl7angsdcfpkv553").await;
         println!("{:?}", response);
     }
 }

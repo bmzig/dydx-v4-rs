@@ -9,7 +9,7 @@ impl WebsocketClient {
     pub async fn markets(&self) 
         -> anyhow::Result<SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>> {
 
-        let (socket, _response) = connect_async(self.endpoint()).await?;
+        let (socket, _response) = connect_async(self.endpoint.clone()).await?;
         let (mut write, read) = socket.split();
 
         let message = r#"{ "type": "subscribe", "channel": "v4_markets" }"#;
@@ -21,7 +21,7 @@ impl WebsocketClient {
     pub async fn trades<T: AsRef<str>>(&self, ticker: T) 
         -> anyhow::Result<SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>> {
 
-        let (socket, _response) = connect_async(self.endpoint()).await?;
+        let (socket, _response) = connect_async(self.endpoint.clone()).await?;
         let (mut write, read) = socket.split();
 
         let message = r#"{ "type": "subscribe", "channel": "v4_trades", "id": ""#;
@@ -34,7 +34,7 @@ impl WebsocketClient {
     pub async fn subaccounts<T: AsRef<str>>(&self, address: T, subaccount_number: T) 
         -> anyhow::Result<SplitStream<WebSocketStream<tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>>>> {
 
-        let (socket, _response) = connect_async(self.endpoint()).await?;
+        let (socket, _response) = connect_async(self.endpoint.clone()).await?;
         let (mut write, read) = socket.split();
 
         let message = r#"{ "type": "subscribe", "channel": "v4_subaccounts", "id": ""#;

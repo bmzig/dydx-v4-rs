@@ -26,11 +26,11 @@ pub struct ValidatorClient {
 }
 
 pub struct FaucetClient {
-    endpoint: String,
+    pub endpoint: String,
 }
 
 pub struct WebsocketClient {
-    endpoint: String,
+    pub endpoint: String,
 }
 
 #[derive(Clone)]
@@ -67,30 +67,5 @@ impl Endpoints {
 
     pub fn testnet() -> Self {
         Self::new(T_REST, T_REST, T_REST)
-    }
-
-    pub fn rest(&self) -> &str {
-        &self.rest
-    }
- 
-    pub fn rpc(&self) -> &str {
-        &self.rpc
-    }
- 
-    pub fn grpc(&self) -> &str {
-        &self.grpc
-    }
-
-}
-
-impl WebsocketClient {
-    pub fn endpoint(&self) -> &str {
-        &self.endpoint
-    }
-}
-
-impl FaucetClient {
-    pub fn endpoint(&self) -> &str {
-        &self.endpoint 
     }
 }
